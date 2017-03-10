@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.util.Log;
 
+import com.squareup.leakcanary.LeakCanary;
+
 import java.io.File;
 
 import okhttp3.OkHttpClient;
@@ -12,7 +14,7 @@ import okhttp3.OkHttpClient;
 /**
  * Created by Admin on 09/03/2017.
  */
-
+//http://222.255.207.13:5000/fsdownload/0S628zt2x/JSON%20files.zip
 public class MangaReaderApp extends Application {
     private static final String TAG = "MangaReaderApp";
     public static Context context   ;
@@ -22,8 +24,9 @@ public class MangaReaderApp extends Application {
     public void onCreate() {
         super.onCreate();
         context = getApplicationContext();
-//        deleteLocalImages();
+        deleteLocalImages();
         client = new OkHttpClient();
+        LeakCanary.install(this);
     }
 
 

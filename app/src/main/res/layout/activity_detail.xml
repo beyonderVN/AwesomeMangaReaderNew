@@ -2,25 +2,21 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="0.2dp"
-    android:background="#ffffff"
-    >
+    android:layout_height="match_parent"
+    tools:context="ngohoanglong.com.awesomemangareader.DetailActivity">
+
     <ViewAnimator
         android:id="@+id/avPageStage"
         android:layout_height="0dp"
-        app:layout_constraintDimensionRatio="H, 1:1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_width="0dp"
         tools:layout_editor_absoluteX="0dp"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="0dp"
-        android:inAnimation="@android:anim/slide_in_left"
-        >
-
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="0dp">
         <TextView
             android:id="@+id/tvPercent"
             android:layout_width="wrap_content"
@@ -36,7 +32,6 @@
             android:scaleType="centerCrop"
             app:srcCompat="@mipmap/ic_launcher"
             android:layout_width="match_parent"
- />
+            />
     </ViewAnimator>
-
 </android.support.constraint.ConstraintLayout>

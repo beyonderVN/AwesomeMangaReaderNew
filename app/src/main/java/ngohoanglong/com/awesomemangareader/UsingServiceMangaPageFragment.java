@@ -1,13 +1,18 @@
 package ngohoanglong.com.awesomemangareader;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.util.LruCache;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -15,6 +20,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.ViewAnimator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,18 +32,15 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import okhttp3.Request;
-import okhttp3.Response;
-
 import static android.content.ContentValues.TAG;
 
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link MangaPageFragment#newInstance} factory method to
+ * Use the {@link UsingServiceMangaPageFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MangaPageFragment extends Fragment {
+public class UsingServiceMangaPageFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -46,7 +50,7 @@ public class MangaPageFragment extends Fragment {
     private MangaPage mangaPage;
 
 
-    public MangaPageFragment() {
+    public UsingServiceMangaPageFragment() {
         // Required empty public constructor
     }
 
@@ -55,20 +59,29 @@ public class MangaPageFragment extends Fragment {
      * this fragment using the provided parameters.
      *
      * @param mangaPage Parameter 1.
-     * @return A new instance of fragment MangaPageFragment.
+     * @return A new instance of fragment UsingServiceMangaPageFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static MangaPageFragment newInstance(MangaPage mangaPage) {
-        MangaPageFragment fragment = new MangaPageFragment();
+    public static UsingServiceMangaPageFragment newInstance(MangaPage mangaPage) {
+        UsingServiceMangaPageFragment fragment = new UsingServiceMangaPageFragment();
         Bundle args = new Bundle();
         args.putSerializable(ARG_PARAM1, mangaPage);
         fragment.setArguments(args);
         return fragment;
     }
-
+    LruCache<String,Bitmap> lruCache;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
+        final int cacheSize = maxMemory/8;
+
+        lruCache = new LruCache<String,Bitmap>(cacheSize){
+            @Override
+            protected int sizeOf(String key, Bitmap value) {
+                return value.getByteCount()/1024;
+            }
+        };
 
     }
 
@@ -77,7 +90,7 @@ public class MangaPageFragment extends Fragment {
         super.onSaveInstanceState(outState);
         outState.putSerializable(ARG_PARAM1, mangaPage);
     }
-
+    RecyclerView recyclerView;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -87,10 +100,17 @@ public class MangaPageFragment extends Fragment {
             Log.d(TAG, "onCreateView: " + mangaPage.getImageList().size());
         }
         View view = inflater.inflate(R.layout.fragment_manga_page, container, false);
-        RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rvImages);
+        recyclerView = (RecyclerView) view.findViewById(R.id.rvImages);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         recyclerView.setAdapter(new MangaAdapter(mangaPage.getImageList()));
         return view;
+    }
+
+    @Override
+    public void onStop() {
+
+        super.onStop();
+
     }
 
     class MangaAdapter extends RecyclerView.Adapter<MangaAdapter.ViewHolder> {
@@ -109,14 +129,27 @@ public class MangaPageFragment extends Fragment {
         }
 
         @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
+        public void onBindViewHolder(final ViewHolder holder, final int position) {
             holder.loadImage(strings.get(position));
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    ActivityOptionsCompat options = ActivityOptionsCompat.
+                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View)holder.imageView, strings.get(position));
+                    startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(),strings.get(position)),options.toBundle());
+                }
+            });
         }
 
         @Override
         public void onViewRecycled(ViewHolder holder) {
-            holder.cancelTask();
+            holder.handler.clear();
+            holder.handler = null;
+            holder.viewAnimator.setDisplayedChild(0);
+            Log.d(TAG, "onViewRecycled: ");
             super.onViewRecycled(holder);
+
         }
 
         @Override
@@ -126,101 +159,78 @@ public class MangaPageFragment extends Fragment {
 
         class ViewHolder extends RecyclerView.ViewHolder {
             ImageView imageView;
-            DownloadImageTask downloadImageTask;
-
+            TextView percent;
+            ViewAnimator viewAnimator;
+            String url;
+            MessengerHandler handler =null;
             public ViewHolder(View itemView) {
                 super(itemView);
                 imageView = (ImageView) itemView.findViewById(R.id.ivImage);
+                percent = (TextView) itemView.findViewById(R.id.tvPercent);
+                viewAnimator = (ViewAnimator) itemView.findViewById(R.id.avPageStage);
+
             }
 
             void loadImage(String url) {
-                downloadImageTask = new DownloadImageTask(imageView);
-                downloadImageTask.execute(url);
+//                viewAnimator.setDisplayedChild(0);
+                this.url = url;
+                handler = new MessengerHandler(this,url);
+//                Intent serviceIntent = DownloadIntentService.makeIntent(imageView.getContext(), handler, url);
+//                imageView.getContext().startService(serviceIntent);
 
-
-            }
-
-            public void cancelTask() {
-                if (downloadImageTask != null) {
-                    downloadImageTask.cancel(true);
-                    downloadImageTask = null;
+                if(imageView==null)return;
+                Bitmap bm = lruCache.get(url);
+                if(bm!=null){
+                    Log.d(TAG, "loadImage: "+url);
+                    viewAnimator.setDisplayedChild(1);
+                    imageView.setImageBitmap(bm);
+                    return;
                 }
-
+                Intent threadsIntent = ThreadPoolDownloadService.makeIntent(itemView.getContext(), handler,
+                        url);
+                itemView.getContext().startService(threadsIntent);
             }
-        }
-
-        private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-            private static final String TAG = "DownloadImageTask";
-            WeakReference<ImageView> weakImageView;
-
-            @Override
-            protected void onCancelled() {
-                Log.d(TAG, "onCancelled: ");
-                weakImageView.clear();
-                super.onCancelled();
-            }
-
-            @Override
-            protected void onPostExecute(Bitmap bitmap) {
-                super.onPostExecute(bitmap);
-                weakImageView.get().setImageBitmap(bitmap);
-            }
-
-            public DownloadImageTask(ImageView bmImage) {
-                this.weakImageView = new WeakReference<ImageView>(bmImage);
-            }
-
-            protected Bitmap doInBackground(String... urls) {
-                final String urldisplay = urls[0];
-                Bitmap bm = null;
-                String fileName = "";
-                Log.d(TAG, "doInBackground: " + urldisplay);
-                fileName = urldisplay.substring(urldisplay.lastIndexOf("/") + 1);
-                fileName = fileName + ".jpg";
-
-                InputStream in = null;
-                if ((bm = loadImageFromStorage(fileName)) != null) {
-                    Log.d(TAG, "loadImageFromStorage: ");
-                    return bm;
+            class MessengerHandler extends Handler {
+                WeakReference<ViewHolder> outerClass;
+                String url;
+                public MessengerHandler(ViewHolder outer,String url) {
+                    outerClass = new WeakReference<ViewHolder>(outer);
+                    this.url = url;
                 }
-                try {
-                    Log.d(TAG, "getImageFromRemote: ");
+                public void clear(){
+                    outerClass.clear();
+                };
+                @Override
+                public void handleMessage(Message msg) {
+                    final ViewHolder vh = outerClass.get();
 
-                    Request request = new Request.Builder().url(urldisplay).build();
-                    Response response = MangaReaderApp.client.newCall(request).execute();
-                    in = response.body().byteStream();
-                    bm = BitmapFactory.decodeStream(in);
-                    double ratio = 1;
-                    if (bm != null) {
-                        ratio = (double) bm.getWidth() / (double) bm.getHeight();
-                    }
-                    int width = MangaReaderApp.width;
-                    int height = (int) ((double) width / ratio);
+                    if (vh!=null&& vh.imageView != null) {
+                        Bitmap bm = BitmapFactory.decodeFile(msg.getData().getString(DownloadUtils.PATHNAME_KEY));
+                        if(bm!=null) {
+                            final double wRatio = (double) bm.getWidth() / (double) vh.imageView.getMeasuredWidth();
+                            final int w = vh.imageView.getMeasuredWidth();
+                            final int h = (int) (bm.getHeight() / wRatio);
+                            if(w>0&&h>0){
+                                bm = Bitmap.createScaledBitmap(bm, w, h, false);
+                            }
 
-                    bm = Bitmap.createScaledBitmap(bm, width, height, false);
-
-                    if (saveToInternalStorage(bm, fileName)) {
-                        Log.d(TAG, "saveToInternalStorage: ");
-                        bm = loadImageFromStorage(fileName);
-                    }
-                } catch (Exception e) {
-                    Log.e("Error", e.getMessage());
-                    e.printStackTrace();
-                    bm = null;
-                } finally {
-                    if (in != null) {
-                        try {
-                            in.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
+                        if(bm!=null){
+                            lruCache.put(url, bm);
+                            vh.viewAnimator.setDisplayedChild(1);
+                            vh.imageView.setImageBitmap(bm);
+                        }
+
+
                     }
                 }
-                return bm;
             }
 
 
+
         }
+
+
     }
 
     public static Bitmap decodeBitmap(InputStream inputStream, int width, int height) throws IOException {
@@ -251,6 +261,7 @@ public class MangaPageFragment extends Fragment {
     private synchronized static Bitmap loadImageFromStorage(String fileName) {
         FileInputStream fileInputStream = null;
         try {
+
             ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
             File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
             File f = new File(directory.getPath(), fileName);

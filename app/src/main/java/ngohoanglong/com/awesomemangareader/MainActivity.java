@@ -28,10 +28,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Toolbar toolbar;
@@ -117,9 +113,24 @@ public class MainActivity extends AppCompatActivity {
             mFragmentList.add(fragment);
             mFragmentTitleList.add(title);
         }
-        public void addFragment(MangaPage mangaPage) {
 
-            mFragmentList.add(MangaPageFragment.newInstance(mangaPage));
+        public void addFragment(MangaPage mangaPage) {
+            List<Class> classes = new ArrayList<>();
+            classes.add(UsingAsynTaskMangaPageFragment.class);
+            classes.add(UsingServiceMangaPageFragment.class);
+
+            switch (mFragmentList.size()%classes.size()) {
+                case 0:
+                mFragmentList.add(UsingServiceMangaPageFragment.newInstance(mangaPage));
+                    break;
+                case 1:
+                    mFragmentList.add(UsingAsynTaskMangaPageFragment.newInstance(mangaPage));
+                    break;
+                default:
+                    mFragmentList.add(UsingServiceMangaPageFragment.newInstance(mangaPage));
+                    break;
+            }
+
             mFragmentTitleList.add(mangaPage.getTitle());
         }
 
@@ -129,8 +140,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    OkHttpClient client = new OkHttpClient();
-    private String url = "http://gofile.me/2NyQz/0S628zt2x";
+
+    private String urlFile = "http://222.255.207.13:5000/fsdownload/0S628zt2x/JSON%20files.zip";
     InputStream getInputStreamFromAssets(Context context, String filename) {
         try {
             InputStream in = context.getAssets().open(filename);
@@ -145,17 +156,38 @@ public class MainActivity extends AppCompatActivity {
 
         List<MangaPage> pages = new ArrayList<>();
         try {
-            Request request = new Request.Builder()
-                    .url(url)
-                    .build();
-            Response response = client.newCall(request).execute();
-//            InputStream in = response.body().byteStream();
+//            Request request = new Request.Builder()
+//                    .url(url)
+//                    .build();
+//            Response response = MangaReaderApp.client.newCall(request).execute();
+//            URL url = new URL(urlFile);
+//            URLConnection urlConnection = url.openConnection();
+//            urlConnection.connect();
+//            int file_size = urlConnection.getContentLength();
+//            InputStream in = urlConnection.getInputStream();
+//            long fileLength = urlConnection.getContentLength();
+//            Log.d(TAG, "fileLength: "+fileLength);
+//            byte data[] = new byte[4096];
+//            long total = 0;
+//            int count;
+//            while ((count = in.read(data)) != -1) {
+////                // allow canceling with back button
+////                if (isCancelled()) {
+////                    input.close();
+////                    return null;
+////                }
+//                total += count;
+//                Log.d(TAG, "total: "+total);
+//                Log.d(TAG, "percent: "+((int) (total * 100 / fileLength)));
+//            }
+
             InputStream in = getInputStreamFromAssets(getApplicationContext(), "JSONfiles.zip");
             ZipInputStream zipInputStream = new ZipInputStream(in);
+            Log.d(TAG, "getFile: "+in);
             ZipEntry ze = null;
 
             while ((ze = zipInputStream.getNextEntry()) != null) {
-
+                Log.d(TAG, "getFile: "+ze.getName());
 
 //                FileOutputStream fout = new FileOutputStream(folder +"/"+ ze.getName());
                 if (!ze.isDirectory()&&!ze.getName().contains("_")) {
@@ -183,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
             }
             zipInputStream.close();
         } catch (IOException e) {
+            Log.d(TAG, "IOException: "+e.getMessage());
             e.printStackTrace();
         }
     return pages;
@@ -202,8 +235,10 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(mangaPages);
             for (MangaPage mangaPage:mangaPages
                  ) {
+
                 ArrayList<String> strings = new ArrayList<>();
-                for(int i=0;i<mangaPage.getImageList().size()&&i<10;i++){
+                final int n = mangaPage.getImageList().size();
+                for(int i=0;i<mangaPage.getImageList().size()&&i<n;i++){
                     strings.add(mangaPage.getImageList().get(i));
                 }
                 adapter.addFragment(new MangaPage(mangaPage.getTitle(),strings));
