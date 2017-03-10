@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.List;
+
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static android.content.ContentValues.TAG;
 
@@ -40,7 +44,6 @@ public class MangaPageFragment extends Fragment {
 
     // TODO: Rename and change types of parameters
     private MangaPage mangaPage;
-
 
 
     public MangaPageFragment() {
@@ -81,16 +84,16 @@ public class MangaPageFragment extends Fragment {
         // Inflate the layout for this fragment
         if (getArguments() != null) {
             mangaPage = (MangaPage) getArguments().getSerializable(ARG_PARAM1);
-            Log.d(TAG, "onCreateView: "+mangaPage.getImageList().size());
+            Log.d(TAG, "onCreateView: " + mangaPage.getImageList().size());
         }
         View view = inflater.inflate(R.layout.fragment_manga_page, container, false);
         RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.rvImages);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(),2));
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         recyclerView.setAdapter(new MangaAdapter(mangaPage.getImageList()));
         return view;
     }
 
-    class MangaAdapter extends RecyclerView.Adapter<MangaAdapter.ViewHolder>{
+    class MangaAdapter extends RecyclerView.Adapter<MangaAdapter.ViewHolder> {
 
 
         List<String> strings;
@@ -102,7 +105,7 @@ public class MangaPageFragment extends Fragment {
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_image, parent, false);
-            return new ViewHolder (view);
+            return new ViewHolder(view);
         }
 
         @Override
@@ -121,25 +124,34 @@ public class MangaPageFragment extends Fragment {
             return strings.size();
         }
 
-        class  ViewHolder extends RecyclerView.ViewHolder {
-            ThumpImageView imageView;
+        class ViewHolder extends RecyclerView.ViewHolder {
+            ImageView imageView;
             DownloadImageTask downloadImageTask;
+
             public ViewHolder(View itemView) {
                 super(itemView);
-                imageView = (ThumpImageView) itemView.findViewById(R.id.ivImage);
+                imageView = (ImageView) itemView.findViewById(R.id.ivImage);
             }
-            void loadImage(String url){
+
+            void loadImage(String url) {
                 downloadImageTask = new DownloadImageTask(imageView);
                 downloadImageTask.execute(url);
+
+
             }
+
             public void cancelTask() {
-                downloadImageTask.cancel(true);
+                if (downloadImageTask != null) {
+                    downloadImageTask.cancel(true);
+                    downloadImageTask = null;
+                }
+
             }
         }
 
         private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
             private static final String TAG = "DownloadImageTask";
-            WeakReference<ThumpImageView> weakImageView;
+            WeakReference<ImageView> weakImageView;
 
             @Override
             protected void onCancelled() {
@@ -148,95 +160,151 @@ public class MangaPageFragment extends Fragment {
                 super.onCancelled();
             }
 
-            public DownloadImageTask(ThumpImageView bmImage) {
-                this.weakImageView = new WeakReference<ThumpImageView>(bmImage);
+            @Override
+            protected void onPostExecute(Bitmap bitmap) {
+                super.onPostExecute(bitmap);
+                weakImageView.get().setImageBitmap(bitmap);
+            }
+
+            public DownloadImageTask(ImageView bmImage) {
+                this.weakImageView = new WeakReference<ImageView>(bmImage);
             }
 
             protected Bitmap doInBackground(String... urls) {
-                String urldisplay = urls[0];
+                final String urldisplay = urls[0];
                 Bitmap bm = null;
                 String fileName = "";
-                Log.d(TAG, "doInBackground: "+urldisplay);
+                Log.d(TAG, "doInBackground: " + urldisplay);
                 fileName = urldisplay.substring(urldisplay.lastIndexOf("/") + 1);
-                fileName = fileName+".jpg";
-                if((bm = loadImageFromStorage(fileName))!=null){
-                    Log.d(TAG, "getImageFromLocal: ");
+                fileName = fileName + ".jpg";
+
+                InputStream in = null;
+                if ((bm = loadImageFromStorage(fileName)) != null) {
+                    Log.d(TAG, "loadImageFromStorage: ");
                     return bm;
                 }
                 try {
                     Log.d(TAG, "getImageFromRemote: ");
-                    InputStream in = new java.net.URL(urldisplay).openStream();
-                    bm = BitmapFactory.decodeStream(in);
 
+                    Request request = new Request.Builder().url(urldisplay).build();
+                    Response response = MangaReaderApp.client.newCall(request).execute();
+                    in = response.body().byteStream();
+                    bm = BitmapFactory.decodeStream(in);
                     double ratio = 1;
-                    if (bm!=null){
-                        ratio = (double)bm.getWidth()/(double)bm.getHeight();
+                    if (bm != null) {
+                        ratio = (double) bm.getWidth() / (double) bm.getHeight();
                     }
                     int width = MangaReaderApp.width;
-                    int height = (int) ((double)width/ratio);
+                    int height = (int) ((double) width / ratio);
+
                     bm = Bitmap.createScaledBitmap(bm, width, height, false);
-                    if(saveToInternalStorage(bm,fileName)){
+
+                    if (saveToInternalStorage(bm, fileName)) {
+                        Log.d(TAG, "saveToInternalStorage: ");
                         bm = loadImageFromStorage(fileName);
                     }
                 } catch (Exception e) {
                     Log.e("Error", e.getMessage());
                     e.printStackTrace();
                     bm = null;
+                } finally {
+                    if (in != null) {
+                        try {
+                            in.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
                 return bm;
             }
 
-            protected void onPostExecute(Bitmap result) {
-                ThumpImageView iv = weakImageView.get();
-                if (iv != null) {
-                    iv.setImageBitmap(result);
-                }
-            }
-            private boolean saveToInternalStorage(Bitmap bitmapImage, String fileName){
-
-                ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
-                File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-                File mypath=new File(directory,fileName);
-                FileOutputStream fos = null;
-
-                try {
-                    fos = new FileOutputStream(mypath);
-                    // Use the compress method on the BitMap object to write image to the OutputStream
-                    if(bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos)){
-                        Log.d(TAG, "saveToInternalStorage: success");
-                        return true;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return false;
-                } finally {
-                    try {
-                        fos.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                return false;
-            }
-            private Bitmap loadImageFromStorage(String fileName)
-            {
-                try {
-                    ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
-                    File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-                    File f=new File(directory.getPath(), fileName);
-                    Log.d(TAG, "loadImageFromStorage: "+directory.getPath()+ fileName);
-                    Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-                    return b;
-                }
-                catch (FileNotFoundException e)
-                {
-                    e.printStackTrace();
-                    return null;
-                }
-
-
-            }
 
         }
+    }
+
+    public static Bitmap decodeBitmap(InputStream inputStream, int width, int height) throws IOException {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+
+
+        BitmapFactory.decodeStream(inputStream, null, options);
+        options.inSampleSize = caculatorInSmapleSize(options, width, height);
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeStream(inputStream, null, options);
+    }
+
+    private synchronized static int caculatorInSmapleSize(BitmapFactory.Options options, int width, int height) {
+        final int h = options.outHeight;
+        final int w = options.outWidth;
+        int inSmapleSize = 16;
+        if (width == 0 || height == 0) return inSmapleSize;
+        if (h > height || w > width) {
+            final int hRatio = Math.round((float) h / (float) height);
+            final int wRatio = Math.round((float) w / (float) width);
+            inSmapleSize = hRatio < wRatio ? hRatio : wRatio;
+
+        }
+        return inSmapleSize;
+    }
+
+    private synchronized static Bitmap loadImageFromStorage(String fileName) {
+        FileInputStream fileInputStream = null;
+        try {
+            ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
+            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+            File f = new File(directory.getPath(), fileName);
+            Log.d(TAG, "loadImageFromStorage: " + directory.getPath() + fileName);
+            fileInputStream = new FileInputStream(f);
+            Bitmap b = BitmapFactory.decodeStream(fileInputStream);
+            fileInputStream.close();
+            return b;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+        return null;
+    }
+
+    private synchronized static boolean saveToInternalStorage(Bitmap bitmapImage, String fileName) {
+        ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        File mypath = new File(directory, fileName);
+        FileOutputStream fos = null;
+
+        try {
+            fos = new FileOutputStream(mypath);
+            // Use the compress method on the BitMap object to write image to the OutputStream
+            if (bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
+                fos.close();
+                return true;
+            }
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (fos != null) {
+                    fos.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 }

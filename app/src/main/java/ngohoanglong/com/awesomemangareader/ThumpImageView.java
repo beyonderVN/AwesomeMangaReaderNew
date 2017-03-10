@@ -27,15 +27,6 @@ public class ThumpImageView extends android.support.v7.widget.AppCompatImageView
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-//        whRatio = 1;
-//            int width = this.getMeasuredWidth();
-//            int height = (int) ((double)width * whRatio) ;
-//            Log.d(TAG, "onMeasure: "+width+"/"+height);
-//            if (height > 0 && width > 0) {
-//                whRatio = (double) height / (double) width;
-//                setMeasuredDimension(width, height);
-//            }
-
 
     }
 

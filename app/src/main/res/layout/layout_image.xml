@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="0.2dp"
     android:background="#ffffff">
-    <ngohoanglong.com.awesomemangareader.ThumpImageView
+
+    <ImageView
         android:id="@+id/ivImage"
-        android:text="asd"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="100dp"
-        android:adjustViewBounds="true"
-        android:scaleType="fitStart"
-        />
-</LinearLayout>
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        app:srcCompat="@mipmap/ic_launcher"
+        app:layout_constraintDimensionRatio="H, 1:1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="0dp"
+        tools:layout_editor_absoluteX="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0.498" />
+</android.support.constraint.ConstraintLayout>
