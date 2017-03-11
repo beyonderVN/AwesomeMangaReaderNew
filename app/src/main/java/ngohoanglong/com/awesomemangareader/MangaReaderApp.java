@@ -8,6 +8,8 @@ import android.util.Log;
 import com.squareup.leakcanary.LeakCanary;
 
 import java.io.File;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import okhttp3.OkHttpClient;
 
@@ -17,9 +19,13 @@ import okhttp3.OkHttpClient;
 //http://222.255.207.13:5000/fsdownload/0S628zt2x/JSON%20files.zip
 public class MangaReaderApp extends Application {
     private static final String TAG = "MangaReaderApp";
+
     public static Context context   ;
     public static int width = 0;
     public static OkHttpClient client;
+
+    public static Executor loadImageExecutor;
+    public static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
     @Override
     public void onCreate() {
         super.onCreate();
@@ -27,6 +33,9 @@ public class MangaReaderApp extends Application {
         deleteLocalImages();
         client = new OkHttpClient();
         LeakCanary.install(this);
+
+
+        loadImageExecutor = Executors.newFixedThreadPool(NUMBER_OF_CORES*4);
     }
 
 

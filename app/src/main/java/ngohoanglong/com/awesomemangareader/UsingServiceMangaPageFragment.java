@@ -33,6 +33,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
+import static ngohoanglong.com.awesomemangareader.MangaReaderApp.context;
 
 
 /**
@@ -69,17 +70,19 @@ public class UsingServiceMangaPageFragment extends Fragment {
         fragment.setArguments(args);
         return fragment;
     }
-    LruCache<String,Bitmap> lruCache;
+
+    LruCache<String, Bitmap> lruCache;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
-        final int cacheSize = maxMemory/8;
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+        final int cacheSize = maxMemory / 8;
 
-        lruCache = new LruCache<String,Bitmap>(cacheSize){
+        lruCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(String key, Bitmap value) {
-                return value.getByteCount()/1024;
+                return value.getByteCount() / 1024;
             }
         };
 
@@ -90,7 +93,9 @@ final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
         super.onSaveInstanceState(outState);
         outState.putSerializable(ARG_PARAM1, mangaPage);
     }
+
     RecyclerView recyclerView;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -130,14 +135,20 @@ final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, final int position) {
+
             holder.loadImage(strings.get(position));
+            if (position % 2 == 0) {
+                holder.viewAnimator.setInAnimation(holder.imageView.getContext(), R.anim.in_from_left);
+            } else {
+                holder.viewAnimator.setInAnimation(holder.imageView.getContext(), R.anim.in_from_right);
+            }
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
                     ActivityOptionsCompat options = ActivityOptionsCompat.
-                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View)holder.imageView, strings.get(position));
-                    startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(),strings.get(position)),options.toBundle());
+                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View) holder.imageView, strings.get(position));
+                    startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(), strings.get(position)), options.toBundle());
                 }
             });
         }
@@ -162,7 +173,8 @@ final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
             TextView percent;
             ViewAnimator viewAnimator;
             String url;
-            MessengerHandler handler =null;
+            MessengerHandler handler = null;
+
             public ViewHolder(View itemView) {
                 super(itemView);
                 imageView = (ImageView) itemView.findViewById(R.id.ivImage);
@@ -172,60 +184,80 @@ final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
             }
 
             void loadImage(String url) {
-//                viewAnimator.setDisplayedChild(0);
+                viewAnimator.setDisplayedChild(0);
                 this.url = url;
-                handler = new MessengerHandler(this,url);
-//                Intent serviceIntent = DownloadIntentService.makeIntent(imageView.getContext(), handler, url);
-//                imageView.getContext().startService(serviceIntent);
-
-                if(imageView==null)return;
+                handler = new MessengerHandler(this, url);
+                percent.setText("Loading !!!");
+                if (imageView == null) return;
                 Bitmap bm = lruCache.get(url);
-                if(bm!=null){
-                    Log.d(TAG, "loadImage: "+url);
-                    viewAnimator.setDisplayedChild(1);
+                if (bm != null) {
+                    Log.d(TAG, "loadImage: " + url);
+
                     imageView.setImageBitmap(bm);
+                    viewAnimator.setDisplayedChild(1);
                     return;
+                }
+                try {
+                    final File file = DownloadUtils.getTemporaryFile(context,
+                            url);
+                    int count;
+                    Log.d(TAG, "    downloading to " + file);
+                    if (file.getAbsoluteFile().exists()) {
+                        Log.d(TAG, "file.exists():true ");
+                        imageView.setImageBitmap(bm);
+                        viewAnimator.setDisplayedChild(1);
+                        return;
+                    }
+
+                } catch (Exception e) {
+                    Log.d(TAG, "loadImage: " + e.getMessage());
                 }
                 Intent threadsIntent = ThreadPoolDownloadService.makeIntent(itemView.getContext(), handler,
                         url);
                 itemView.getContext().startService(threadsIntent);
             }
+
             class MessengerHandler extends Handler {
                 WeakReference<ViewHolder> outerClass;
                 String url;
-                public MessengerHandler(ViewHolder outer,String url) {
+
+                public MessengerHandler(ViewHolder outer, String url) {
                     outerClass = new WeakReference<ViewHolder>(outer);
                     this.url = url;
                 }
-                public void clear(){
+
+                public void clear() {
                     outerClass.clear();
-                };
+                }
+
+                ;
+
                 @Override
                 public void handleMessage(Message msg) {
                     final ViewHolder vh = outerClass.get();
 
-                    if (vh!=null&& vh.imageView != null) {
+                    if (vh != null && vh.imageView != null) {
                         Bitmap bm = BitmapFactory.decodeFile(msg.getData().getString(DownloadUtils.PATHNAME_KEY));
-                        if(bm!=null) {
+                        if (bm != null) {
                             final double wRatio = (double) bm.getWidth() / (double) vh.imageView.getMeasuredWidth();
                             final int w = vh.imageView.getMeasuredWidth();
                             final int h = (int) (bm.getHeight() / wRatio);
-                            if(w>0&&h>0){
+                            if (w > 0 && h > 0) {
                                 bm = Bitmap.createScaledBitmap(bm, w, h, false);
                             }
 
                         }
-                        if(bm!=null){
+                        if (bm != null) {
                             lruCache.put(url, bm);
-                            vh.viewAnimator.setDisplayedChild(1);
+
                             vh.imageView.setImageBitmap(bm);
+                            vh.viewAnimator.setDisplayedChild(1);
                         }
 
 
                     }
                 }
             }
-
 
 
         }
@@ -262,7 +294,7 @@ final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
         FileInputStream fileInputStream = null;
         try {
 
-            ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
+            ContextWrapper cw = new ContextWrapper(context);
             File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
             File f = new File(directory.getPath(), fileName);
             Log.d(TAG, "loadImageFromStorage: " + directory.getPath() + fileName);
@@ -291,7 +323,7 @@ final int maxMemory = (int) (Runtime.getRuntime().maxMemory()/1024);
     }
 
     private synchronized static boolean saveToInternalStorage(Bitmap bitmapImage, String fileName) {
-        ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
+        ContextWrapper cw = new ContextWrapper(context);
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
         File mypath = new File(directory, fileName);
         FileOutputStream fos = null;

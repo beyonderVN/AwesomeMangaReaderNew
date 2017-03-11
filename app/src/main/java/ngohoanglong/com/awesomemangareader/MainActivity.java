@@ -121,13 +121,13 @@ public class MainActivity extends AppCompatActivity {
 
             switch (mFragmentList.size()%classes.size()) {
                 case 0:
-                mFragmentList.add(UsingServiceMangaPageFragment.newInstance(mangaPage));
+                mFragmentList.add(UsingAsynTaskMangaPageFragment.newInstance(mangaPage));
                     break;
                 case 1:
                     mFragmentList.add(UsingAsynTaskMangaPageFragment.newInstance(mangaPage));
                     break;
                 default:
-                    mFragmentList.add(UsingServiceMangaPageFragment.newInstance(mangaPage));
+                    mFragmentList.add(UsingAsynTaskMangaPageFragment.newInstance(mangaPage));
                     break;
             }
 

@@ -11,12 +11,14 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * @class DownloadUtils
@@ -128,7 +130,7 @@ public class DownloadUtils {
                                           Uri uri,
                                           Messenger messenger) {
     	sendPath(DownloadUtils.downloadFile(context,
-                                            uri),
+                                            uri,messenger),
                  messenger);
     }
     
@@ -149,13 +151,14 @@ public class DownloadUtils {
      * the URL class, store it on the android file system using
      * openFileOutput(), and return the path to the file on disk.
      *
-     * @param context	the context in which to write the file
+     * @param context    the context in which to write the file
      * @param uri       the web url
-     * 
+     *
+     * @param messenger
      * @return          the path to the downloaded file on the file system
      */
-    public static String downloadFile (Context context,
-                                       Uri uri) {
+    public static String downloadFile(Context context,
+                                      Uri uri, Messenger messenger) {
     	
     	try {
 
@@ -186,25 +189,61 @@ public class DownloadUtils {
     	
             // Otherwise, go ahead and download the file
             else {
-                // Create a temp file.
-                final File file = getTemporaryFile(context,
-                                                   uri.toString());
+                final File file = DownloadUtils.getTemporaryFile(context,
+                        uri.toString());
+                int count;
                 Log.d(TAG, "    downloading to " + file);
-	            if (file.exists()) {
+                if (file.getAbsoluteFile().exists()) {
                     Log.d(TAG, "file.exists():true ");
                     return file.getAbsolutePath();
                 }
-                // Download the contents at the URL, which should
-                // reference an image.
-                final InputStream in = (InputStream)
-                    new URL(uri.toString()).getContent();
+                URL u = new URL(uri.toString());
+                URLConnection conection = u.openConnection();
+                conection.connect();
+                int lenghtOfFile = conection.getContentLength();
+                InputStream input = new BufferedInputStream(u.openStream(), 8192);
+
                 final OutputStream os =
-                    new FileOutputStream(file);
-	
-                // Copy the contents of the downloaded image to the
-                // temp file.
-                copy(in, os);
-                in.close();
+                        new FileOutputStream(file);
+
+                byte data[] = new byte[1024];
+
+                long total = 0;
+                int percent=0;
+                while ((count = input.read(data)) != -1) {
+//                    if(isCancelled()) {
+//                        publishProgress(-1);
+//                        os.close();
+//                        input.close();
+//                        return null;
+//                    }
+                    total += count;
+                    final int newPercent = (int) ((total * 100) / lenghtOfFile);
+                    if(newPercent!=percent) {
+//                        publishProgress(percent);
+                        Log.d(TAG, "downloadFile: "+percent);
+                        Message msg = Message.obtain();
+                        Bundle bundle = new Bundle();
+                        bundle.putString(PERCENT_KEY,
+                                percent+"");
+
+                        // Make the Bundle the "data" of the Message.
+                        msg.setData(bundle);
+
+                        try {
+                            // Send the Message back to the client Activity.
+                            messenger.send(msg);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                        percent=newPercent;
+                    }
+
+                    os.write(data, 0, count);
+                }
+
+                os.flush();
+                input.close();
                 os.close();
 	
                 // Return the pathname of the temp file.
