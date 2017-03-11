@@ -27,7 +27,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Display3"
             android:textColor="#000"
             android:textSize="18sp" />
-        <ImageView
+        <ngohoanglong.com.awesomemangareader.MyImageView
             android:id="@+id/ivImage"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"

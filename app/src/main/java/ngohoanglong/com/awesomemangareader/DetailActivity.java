@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ViewAnimator;
 
@@ -29,7 +28,7 @@ public class DetailActivity extends AppCompatActivity {
     private static final String TAG = "DetailActivity";
     static final String URL_IMAGE = "URL_IMAGE";
 
-    ImageView imageView;
+    MyImageView imageView;
     TextView percent;
     ViewAnimator viewAnimator;
     String urlImage;
@@ -39,7 +38,7 @@ public class DetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
         urlImage = getIntent().getExtras().getString(URL_IMAGE);
-        imageView = (ImageView) findViewById(R.id.ivImage);
+        imageView = (MyImageView) findViewById(R.id.ivImage);
         percent = (TextView) findViewById(R.id.tvPercent);
         viewAnimator = (ViewAnimator) findViewById(R.id.avPageStage);
         imageView.setTransitionName(urlImage);
@@ -83,13 +82,7 @@ public class DetailActivity extends AppCompatActivity {
                 URL u = new URL(url);
                 URLConnection conection = u.openConnection();
                 conection.connect();
-                // getting file length
                 int lenghtOfFile = conection.getContentLength();
-
-//                final InputStream in = (InputStream)
-//                        new URL(url).getContent();
-
-                // input stream to read file - with 8k buffer
                 InputStream input = new BufferedInputStream(u.openStream(), 8192);
 
                 final OutputStream os =
@@ -110,36 +103,19 @@ public class DetailActivity extends AppCompatActivity {
                         os.close();
                         return null;
                     }
-//                    final Activity activity = reference.get();
-//                    if(activity.onViewRecycled) {
-//                        publishProgress(-1);
-//                        // closing streams
-//                        os.close();
-//                        input.close();
-//
-//                        input.close();
-//                        os.close();
-//                        return null;
-//                    }
+
                     total += count;
-                    // publishing the progress....
-                    // After this onProgressUpdate will be called
                     final int newPercent = (int) ((total * 100) / lenghtOfFile);
                     if (newPercent != percent) {
                         publishProgress(percent);
                         percent = newPercent;
                     }
-                    // writing data to file
+
                     os.write(data, 0, count);
                 }
 
-                // flushing output
+
                 os.flush();
-
-                // closing streams
-                os.close();
-                input.close();
-
                 input.close();
                 os.close();
                 return BitmapFactory.decodeFile(file.getAbsolutePath());
@@ -169,7 +145,7 @@ public class DetailActivity extends AppCompatActivity {
 
             if (bitmap != null) {
                 final double wRatio = (double) bitmap.getWidth() / (double) detailActivity.imageView.getMeasuredWidth();
-                final int w = detailActivity.imageView.getMeasuredWidth();
+                final int w = detailActivity.imageView.getMeasuredWidth()*3/2;
                 final int h = (int) (bitmap.getHeight() / wRatio);
                 if (w > 0 && h > 0) {
                     bitmap = Bitmap.createScaledBitmap(bitmap, w, h, false);

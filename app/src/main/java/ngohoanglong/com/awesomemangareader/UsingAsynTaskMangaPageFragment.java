@@ -46,7 +46,7 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
 
-    ExecutorService loadImageExecutor ;
+    ExecutorService loadImageExecutor;
     // TODO: Rename and change types of parameters
     private MangaPage mangaPage;
 
@@ -79,7 +79,6 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
         final int cacheSize = maxMemory / 8;
 
-
         lruCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(String key, Bitmap value) {
@@ -87,6 +86,15 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
             }
         };
 
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+
+        } else {
+        }
     }
 
 
@@ -199,9 +207,24 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
                     imageView.setImageBitmap(bm);
                     return;
                 }
+
+                File file= null;
+
+                if (file!=null && file.getAbsoluteFile().exists()) {
+                    Log.d(TAG, "file.exists():true ");
+                    viewAnimator.setDisplayedChild(1);
+                    imageView.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
+                    return;
+                }
+
                 viewAnimator.setDisplayedChild(0);
                 loadImageTask = new LoadImageTask(this, url);
-                loadImageTask.executeOnExecutor(loadImageExecutor);
+                if (loadImageExecutor != null) {
+                    loadImageTask.executeOnExecutor(loadImageExecutor);
+                } else {
+                    loadImageTask.execute();
+                }
+
             }
 
 
@@ -210,7 +233,7 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
 
     }
 
-    public class LoadImageTask extends AsyncTask<String, Integer, Bitmap> {
+    public class LoadImageTask extends AsyncTask<String, Integer, String> {
         WeakReference<MangaAdapter.ViewHolder> reference;
         String url;
 
@@ -220,16 +243,16 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
         }
 
         @Override
-        protected Bitmap doInBackground(String... params) {
+        protected String doInBackground(String... params) {
             int count;
             try {
                 final File file = DownloadUtils.getTemporaryFile(context,
                         url);
                 Log.d(TAG, "    downloading to " + file);
-//                if (file.getAbsoluteFile().exists()) {
-//                    Log.d(TAG, "file.exists():true ");
-//                    return BitmapFactory.decodeFile(file.getAbsolutePath());
-//                }
+                if (file.getAbsoluteFile().exists()) {
+                    Log.d(TAG, "file.exists():true ");
+                    file.getAbsolutePath();
+                }
                 URL u = new URL(url);
                 URLConnection conection = u.openConnection();
                 conection.connect();
@@ -263,7 +286,7 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
                 os.flush();
                 os.close();
                 input.close();
-                return BitmapFactory.decodeFile(file.getAbsolutePath());
+                return file.getAbsolutePath();
             } catch (Exception e) {
                 Log.d(TAG, "Exception: " + e.getMessage());
                 return null;
@@ -286,20 +309,21 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            super.onPostExecute(bitmap);
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
             final MangaAdapter.ViewHolder viewHolder = reference.get();
             if (viewHolder != null && viewHolder.url == url) {
-                if (bitmap != null) {
-                    final double wRatio = (double) bitmap.getWidth() / (double) viewHolder.imageView.getMeasuredWidth();
+                Bitmap bm = BitmapFactory.decodeFile(result);
+                if (bm != null) {
+                    final double wRatio = (double) bm.getWidth() / (double) viewHolder.imageView.getMeasuredWidth();
                     final int w = viewHolder.imageView.getMeasuredWidth();
-                    final int h = (int) (bitmap.getHeight() / wRatio);
+                    final int h = (int) (bm.getHeight() / wRatio);
                     if (w > 0 && h > 0) {
-                        bitmap = Bitmap.createScaledBitmap(bitmap, w, h, false);
+                        bm = Bitmap.createScaledBitmap(bm, w, h, false);
                     }
-                    lruCache.put(url, bitmap);
+                    lruCache.put(url, bm);
 
-                    viewHolder.imageView.setImageBitmap(bitmap);
+                    viewHolder.imageView.setImageBitmap(bm);
                     viewHolder.viewAnimator.setDisplayedChild(1);
                 } else {
                     viewHolder.percent.setText("Error!");
