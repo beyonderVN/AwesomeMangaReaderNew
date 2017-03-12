@@ -31,12 +31,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import ngohoanglong.com.awesomemangareader.Page;
 import ngohoanglong.com.awesomemangareader.MangaReaderApp;
 import ngohoanglong.com.awesomemangareader.R;
-import ngohoanglong.com.awesomemangareader.activity.fragment.UsingAsynTaskMangaPageFragment;
-import ngohoanglong.com.awesomemangareader.activity.fragment.UsingServiceMangaPageFragment;
-import ngohoanglong.com.awesomemangareader.activity.fragment.UsingRxjavaMangaPageFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingAsynTaskChapterFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingRxjavaChapterFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingServiceChapterFragment;
+import ngohoanglong.com.awesomemangareader.model.Chapter;
+import ngohoanglong.com.awesomemangareader.model.Image;
 
 public class
 
@@ -92,7 +93,7 @@ MainActivity extends AppCompatActivity {
             //resume tasks needing this permission
         }
     }
-    List<Page> pages = new ArrayList<>();
+    List<Chapter> pages = new ArrayList<>();
     ViewPagerAdapter adapter;
     private void setupViewPager(ViewPager viewPager) {
 
@@ -133,21 +134,21 @@ MainActivity extends AppCompatActivity {
             mFragmentTitleList.add(title);
         }
 
-        public void addFragment(Page page) {
+        public void addFragment(Chapter page) {
             List<Class> classes = new ArrayList<>();
-            classes.add(UsingAsynTaskMangaPageFragment.class);
-            classes.add(UsingServiceMangaPageFragment.class);
-            classes.add(UsingRxjavaMangaPageFragment.class);
+            classes.add(UsingAsynTaskChapterFragment.class);
+            classes.add(UsingServiceChapterFragment.class);
+            classes.add(UsingRxjavaChapterFragment.class);
 
             switch (mFragmentList.size()%classes.size()) {
                 case 0:
-                mFragmentList.add(UsingRxjavaMangaPageFragment.newInstance(page));
+//                mFragmentList.add(UsingRxjavaChapterFragment.newInstance(page));
                     break;
 //                case 1:
-//                    mFragmentList.add(UsingRxjavaMangaPageFragment.newInstance(page));
+//                    mFragmentList.add(UsingRxjavaChapterFragment.newInstance(page));
 //                    break;
 //                default:
-//                    mFragmentList.add(UsingRxjavaMangaPageFragment.newInstance(page));
+//                    mFragmentList.add(UsingRxjavaChapterFragment.newInstance(page));
 //                    break;
             }
 
@@ -172,9 +173,9 @@ MainActivity extends AppCompatActivity {
         return null;
     }
 
-    private List<Page> getFile() {
+    private List<Chapter> getFile() {
 
-        List<Page> pages = new ArrayList<>();
+        List<Chapter> pages = new ArrayList<>();
         try {
 
             InputStream in = getInputStreamFromAssets(getApplicationContext(), "JSONfiles.zip");
@@ -218,27 +219,25 @@ MainActivity extends AppCompatActivity {
 
     }
 
-    class MyAsynTask extends AsyncTask<String, String, List<Page>> {
+    class MyAsynTask extends AsyncTask<String, String, List<Chapter>> {
 
         @Override
-        protected List<Page> doInBackground(String... params) {
+        protected List<Chapter> doInBackground(String... params) {
 
             return getFile();
         }
 
         @Override
-        protected void onPostExecute(List<Page> pages) {
+        protected void onPostExecute(List<Chapter> pages) {
             super.onPostExecute(pages);
-            for (Page page : pages
+            for (Chapter page : pages
                     ) {
-                ArrayList<String> strings = new ArrayList<>();
+                ArrayList<Image> strings = new ArrayList<>();
                 final int n = page.getImageList().size();
                 for (int i = 0; i < page.getImageList().size() && i < n; i++) {
-//                    strings.add(page.getImageList().get(i));
+                    strings.add(page.getImageList().get(i));
                 }
-//                adapter.addFragment(new Page(page.getTitle(), strings));
-
-
+                adapter.addFragment(new Chapter(page.getTitle(), strings));
             }
         }
     }

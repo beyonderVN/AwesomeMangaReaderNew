@@ -2,8 +2,6 @@ package ngohoanglong.com.awesomemangareader.activity.fragment;
 
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -24,19 +22,15 @@ import android.widget.TextView;
 import android.widget.ViewAnimator;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import ngohoanglong.com.awesomemangareader.Page;
-import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
 import ngohoanglong.com.awesomemangareader.R;
-import ngohoanglong.com.awesomemangareader.service.ThreadPoolDownloadService;
 import ngohoanglong.com.awesomemangareader.activity.DetailActivity;
+import ngohoanglong.com.awesomemangareader.model.Chapter;
+import ngohoanglong.com.awesomemangareader.model.Image;
+import ngohoanglong.com.awesomemangareader.service.ThreadPoolDownloadService;
+import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
 
 import static android.content.ContentValues.TAG;
 import static ngohoanglong.com.awesomemangareader.MangaReaderApp.context;
@@ -44,20 +38,20 @@ import static ngohoanglong.com.awesomemangareader.MangaReaderApp.context;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link UsingServiceMangaPageFragment#newInstance} factory method to
+ * Use the {@link UsingServiceChapterFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class UsingServiceMangaPageFragment extends Fragment {
+public class UsingServiceChapterFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
 
 
     // TODO: Rename and change types of parameters
-    private Page page;
+    private Chapter chapter;
 
 
-    public UsingServiceMangaPageFragment() {
+    public UsingServiceChapterFragment() {
         // Required empty public constructor
     }
 
@@ -66,11 +60,11 @@ public class UsingServiceMangaPageFragment extends Fragment {
      * this fragment using the provided parameters.
      *
      * @param page Parameter 1.
-     * @return A new instance of fragment UsingServiceMangaPageFragment.
+     * @return A new instance of fragment UsingServiceChapterFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static UsingServiceMangaPageFragment newInstance(Page page) {
-        UsingServiceMangaPageFragment fragment = new UsingServiceMangaPageFragment();
+    public static UsingServiceChapterFragment newInstance(Chapter page) {
+        UsingServiceChapterFragment fragment = new UsingServiceChapterFragment();
         Bundle args = new Bundle();
         args.putSerializable(ARG_PARAM1, page);
         fragment.setArguments(args);
@@ -97,7 +91,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putSerializable(ARG_PARAM1, page);
+        outState.putSerializable(ARG_PARAM1, chapter);
     }
 
     RecyclerView recyclerView;
@@ -107,13 +101,13 @@ public class UsingServiceMangaPageFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         if (getArguments() != null) {
-            page = (Page) getArguments().getSerializable(ARG_PARAM1);
-            Log.d(TAG, "onCreateView: " + page.getImageList().size());
+            chapter = (Chapter) getArguments().getSerializable(ARG_PARAM1);
+            Log.d(TAG, "onCreateView: " + chapter.getImageList().size());
         }
         View view = inflater.inflate(R.layout.fragment_manga_page, container, false);
         recyclerView = (RecyclerView) view.findViewById(R.id.rvImages);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-//        recyclerView.setAdapter(new MangaAdapter(page.getImageList()));
+        recyclerView.setAdapter(new MangaAdapter(chapter.getImageList()));
         return view;
     }
 
@@ -127,10 +121,10 @@ public class UsingServiceMangaPageFragment extends Fragment {
     class MangaAdapter extends RecyclerView.Adapter<MangaAdapter.ViewHolder> {
 
 
-        List<String> strings;
+        List<Image> images;
 
-        public MangaAdapter(List<String> strings) {
-            this.strings = strings;
+        public MangaAdapter(List<Image> images) {
+            this.images = images;
         }
 
         @Override
@@ -142,7 +136,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
         @Override
         public void onBindViewHolder(final ViewHolder holder, final int position) {
 
-            holder.loadImage(strings.get(position));
+            holder.loadImage(images.get(position).getUrl());
             if (position % 2 == 0) {
                 holder.viewAnimator.setInAnimation(holder.imageView.getContext(), R.anim.in_from_left);
             } else {
@@ -153,8 +147,8 @@ public class UsingServiceMangaPageFragment extends Fragment {
                 public void onClick(View v) {
 
                     ActivityOptionsCompat options = ActivityOptionsCompat.
-                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View) holder.imageView, strings.get(position));
-                    startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(), strings.get(position)), options.toBundle());
+                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View) holder.imageView, images.get(position).getUrl());
+                    startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(), images.get(position).getUrl()), options.toBundle());
                 }
             });
         }
@@ -171,7 +165,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return strings.size();
+            return images.size();
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
@@ -251,11 +245,9 @@ public class UsingServiceMangaPageFragment extends Fragment {
                             if (w > 0 && h > 0) {
                                 bm = Bitmap.createScaledBitmap(bm, w, h, false);
                             }
-
                         }
                         if (bm != null) {
                             lruCache.put(url, bm);
-
                             vh.imageView.setImageBitmap(bm);
                             vh.viewAnimator.setDisplayedChild(1);
                         }
@@ -271,89 +263,5 @@ public class UsingServiceMangaPageFragment extends Fragment {
 
     }
 
-    public static Bitmap decodeBitmap(InputStream inputStream, int width, int height) throws IOException {
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
 
-
-        BitmapFactory.decodeStream(inputStream, null, options);
-        options.inSampleSize = caculatorInSmapleSize(options, width, height);
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeStream(inputStream, null, options);
-    }
-
-    private synchronized static int caculatorInSmapleSize(BitmapFactory.Options options, int width, int height) {
-        final int h = options.outHeight;
-        final int w = options.outWidth;
-        int inSmapleSize = 16;
-        if (width == 0 || height == 0) return inSmapleSize;
-        if (h > height || w > width) {
-            final int hRatio = Math.round((float) h / (float) height);
-            final int wRatio = Math.round((float) w / (float) width);
-            inSmapleSize = hRatio < wRatio ? hRatio : wRatio;
-
-        }
-        return inSmapleSize;
-    }
-
-    private synchronized static Bitmap loadImageFromStorage(String fileName) {
-        FileInputStream fileInputStream = null;
-        try {
-
-            ContextWrapper cw = new ContextWrapper(context);
-            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-            File f = new File(directory.getPath(), fileName);
-            Log.d(TAG, "loadImageFromStorage: " + directory.getPath() + fileName);
-            fileInputStream = new FileInputStream(f);
-            Bitmap b = BitmapFactory.decodeStream(fileInputStream);
-            fileInputStream.close();
-            return b;
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fileInputStream != null) {
-                try {
-                    fileInputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-
-        return null;
-    }
-
-    private synchronized static boolean saveToInternalStorage(Bitmap bitmapImage, String fileName) {
-        ContextWrapper cw = new ContextWrapper(context);
-        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        File mypath = new File(directory, fileName);
-        FileOutputStream fos = null;
-
-        try {
-            fos = new FileOutputStream(mypath);
-            // Use the compress method on the BitMap object to write image to the OutputStream
-            if (bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
-                fos.close();
-                return true;
-            }
-            fos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                if (fos != null) {
-                    fos.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return false;
-    }
 }

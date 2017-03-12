@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import ngohoanglong.com.awesomemangareader.utils.ImageUtils;
 import okhttp3.OkHttpClient;
 
 /**
@@ -26,20 +27,20 @@ public class MangaReaderApp extends Application {
 
     public static Executor loadImageExecutor;
     public static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
+
     @Override
     public void onCreate() {
         super.onCreate();
         context = getApplicationContext();
-        deleteLocalImages();
-        client = new OkHttpClient();
+
         LeakCanary.install(this);
 
-
+        new ImageUtils(this);
         loadImageExecutor = Executors.newFixedThreadPool(NUMBER_OF_CORES*4);
     }
 
 
-    void deleteLocalImages(){
+    public static void deleteAllLocalImages(){
         ContextWrapper cw = new ContextWrapper(MangaReaderApp.context);
         // path to /data/data/yourapp/app_data/imageDir
         File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);

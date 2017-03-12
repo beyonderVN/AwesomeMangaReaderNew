@@ -26,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="0%"
+            android:text="loading !!!"
             android:textAppearance="@style/TextAppearance.AppCompat.Display3"
             android:textColor="#000"
             android:textSize="18sp" />

@@ -3,12 +3,16 @@ package ngohoanglong.com.awesomemangareader.activity;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -16,10 +20,13 @@ import android.widget.TextView;
 import java.util.List;
 
 import ngohoanglong.com.awesomemangareader.AppState;
+import ngohoanglong.com.awesomemangareader.MangaReaderApp;
 import ngohoanglong.com.awesomemangareader.R;
-import ngohoanglong.com.awesomemangareader.activity.fragment.ChapterFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingAsynTaskChapterFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingRxjavaChapterFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingServiceChapterFragment;
 import ngohoanglong.com.awesomemangareader.model.Chapter;
-
+import ngohoanglong.com.awesomemangareader.utils.ImageUtils;
 
 
 public class BrowserActivity extends AppCompatActivity {
@@ -55,10 +62,20 @@ public class BrowserActivity extends AppCompatActivity {
             rvChapterList.setAdapter(new PageListAdapter());
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
-                ft.add(R.id.rvPageContent, ChapterFragment.newInstance(currentPagePosittion), TAG);
+                ft.add(R.id.rvPageContent, getFragment(), TAG);
                 ft.commit();
             }
         }
+    }
+
+
+    private Fragment getFragment() {
+        switch (useType){
+            case 0:return UsingRxjavaChapterFragment.newInstance(currentPagePosittion);
+            case 1:return UsingAsynTaskChapterFragment.newInstance(currentPagePosittion);
+            case 2:return UsingServiceChapterFragment.newInstance(AppState.chapeters.get(currentPagePosittion));
+        }
+        return null;
     }
 
 
@@ -95,12 +112,12 @@ public class BrowserActivity extends AppCompatActivity {
                         currentPagePosittion = position;
                         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
                         if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
-                            ft.add(R.id.rvPageContent, ChapterFragment.newInstance(currentPagePosittion), TAG);
+                            ft.add(R.id.rvPageContent, getFragment(), TAG);
                             ft.addToBackStack(null);
                             ft.commit();
                         }
                         else  {
-                            ft.replace(R.id.rvPageContent, ChapterFragment.newInstance(currentPagePosittion), TAG);
+                            ft.replace(R.id.rvPageContent, getFragment(), TAG);
                             ft.addToBackStack(null);
                             ft.commit();
                         }
@@ -126,6 +143,39 @@ public class BrowserActivity extends AppCompatActivity {
         }
 
 
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+
+    int useType=0;
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()){
+            case  R.id.clearDiskCache:
+                MangaReaderApp.deleteAllLocalImages();
+                return false;
+            case  R.id.clearDiskLruCache:
+                ImageUtils.clearCache();
+
+                return false;
+            case  R.id.useRx:
+                useType=0;
+                return false;
+            case  R.id.useAsyn:
+                useType=1;
+                return false;
+//            case  R.id.useIntentService:
+//                useType=2;
+//                getActionBar().setTitle("Intent");
+//                return false;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

@@ -32,47 +32,35 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import ngohoanglong.com.awesomemangareader.Page;
-import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
+import ngohoanglong.com.awesomemangareader.AppState;
 import ngohoanglong.com.awesomemangareader.R;
 import ngohoanglong.com.awesomemangareader.activity.DetailActivity;
+import ngohoanglong.com.awesomemangareader.model.Chapter;
+import ngohoanglong.com.awesomemangareader.model.Image;
+import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
 
 import static android.content.ContentValues.TAG;
 import static ngohoanglong.com.awesomemangareader.MangaReaderApp.NUMBER_OF_CORES;
 import static ngohoanglong.com.awesomemangareader.MangaReaderApp.context;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link UsingAsynTaskMangaPageFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class UsingAsynTaskMangaPageFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+public class UsingAsynTaskChapterFragment extends Fragment {
+
     private static final String ARG_PARAM1 = "param1";
 
     ExecutorService loadImageExecutor;
-    // TODO: Rename and change types of parameters
-    private Page page;
+
+    private Chapter chapter;
 
 
-    public UsingAsynTaskMangaPageFragment() {
-        // Required empty public constructor
+    public UsingAsynTaskChapterFragment() {
+
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param page Parameter 1.
-     * @return A new instance of fragment UsingServiceMangaPageFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static UsingAsynTaskMangaPageFragment newInstance(Page page) {
-        UsingAsynTaskMangaPageFragment fragment = new UsingAsynTaskMangaPageFragment();
+    public static UsingAsynTaskChapterFragment newInstance(int page) {
+        UsingAsynTaskChapterFragment fragment = new UsingAsynTaskChapterFragment();
         Bundle args = new Bundle();
-        args.putSerializable(ARG_PARAM1, page);
+        args.putInt(ARG_PARAM1, page);
         fragment.setArguments(args);
         return fragment;
     }
@@ -84,8 +72,9 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (getArguments() != null) {
-            page = (Page) getArguments().getSerializable(ARG_PARAM1);
-            Log.d(TAG, "onCreateView: " + page.getImageList().size());
+            final int pst = getArguments().getInt(ARG_PARAM1);
+            chapter = AppState.chapeters.get(pst);
+            Log.d(TAG, "onCreateView: " + chapter.getImageList().size());
         }
 
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
@@ -113,15 +102,13 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putSerializable(ARG_PARAM1, page);
     }
 
     @Override
     public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
         if (savedInstanceState != null) {
-            page = (Page) savedInstanceState.getSerializable(ARG_PARAM1);
-            Log.d(TAG, "onCreateView: " + page.getImageList().size());
+            Log.d(TAG, "onCreateView: " + chapter.getImageList().size());
         }
     }
 
@@ -134,7 +121,7 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_manga_page, container, false);
         recyclerView = (RecyclerView) view.findViewById(R.id.rvImages);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-//        recyclerView.setAdapter(new MangaAdapter(page.getImageList()));
+        recyclerView.setAdapter(new MangaAdapter(chapter.getImageList()));
 
         return view;
     }
@@ -154,10 +141,10 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
     class MangaAdapter extends RecyclerView.Adapter<MangaAdapter.ViewHolder> {
 
 
-        List<String> strings;
+        List<Image> images;
 
-        public MangaAdapter(List<String> strings) {
-            this.strings = strings;
+        public MangaAdapter(List<Image> images) {
+            this.images = images;
         }
 
         @Override
@@ -169,35 +156,32 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
         @Override
         public void onBindViewHolder(final ViewHolder holder, final int position) {
 
-            holder.imageView.setTransitionName(strings.get(position));
+            holder.imageView.setTransitionName(images.get(position).getUrl());
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
                     ActivityOptionsCompat options = ActivityOptionsCompat.
-                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View) holder.imageView, strings.get(position));
-                    startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(), strings.get(position)), options.toBundle());
+                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View) holder.imageView, images.get(position).getUrl());
+                    startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(), images.get(position).getUrl()), options.toBundle());
                 }
             });
-            holder.loadImage(strings.get(position));
+            holder.loadImage(images.get(position).getUrl());
         }
 
         @Override
         public void onViewRecycled(ViewHolder holder) {
-            holder.viewAnimator.setDisplayedChild(1);
-            holder.percent.setText("0%");
             Log.d(TAG, "onViewRecycled: ");
             if (holder.loadImageTask != null) {
                 holder.loadImageTask.cancel(true);
             }
-
             super.onViewRecycled(holder);
 
         }
 
         @Override
         public int getItemCount() {
-            return strings.size();
+            return images.size();
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
@@ -225,9 +209,9 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
                     return;
                 }
 
-                File file= null;
+                File file = null;
 
-                if (file!=null && file.getAbsoluteFile().exists()) {
+                if (file != null && file.getAbsoluteFile().exists()) {
                     Log.d(TAG, "file.exists():true ");
                     viewAnimator.setDisplayedChild(1);
                     imageView.setImageBitmap(BitmapFactory.decodeFile(file.getAbsolutePath()));
@@ -283,12 +267,17 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
 
                 long total = 0;
                 int percent = 0;
+
                 while ((count = input.read(data)) != -1) {
-                    if (isCancelled()) {
-                        publishProgress(-1);
-                        os.close();
-                        input.close();
-                        cancel(true);
+                    final MangaAdapter.ViewHolder viewHolder = reference.get();
+
+                    if (viewHolder != null) {
+                        if(viewHolder.url!=url)return null;
+                        if (isCancelled()) {
+                            publishProgress(-1);
+                            os.close();
+                            input.close();
+                        }
                     }
                     total += count;
                     final int newPercent = (int) ((total * 100) / lenghtOfFile);
@@ -304,7 +293,10 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
                 os.close();
                 input.close();
                 return file.getAbsolutePath();
-            } catch (Exception e) {
+            } catch (
+                    Exception e)
+
+            {
                 Log.d(TAG, "Exception: " + e.getMessage());
                 return null;
             }
@@ -314,7 +306,9 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
             final MangaAdapter.ViewHolder viewHolder = reference.get();
+
             if (viewHolder != null && viewHolder.percent != null) {
+
                 if (values[0] == -1) {
                     Log.d(TAG, "onProgressUpdate: Cancel");
                     viewHolder.percent.setText("Cancel!!");
@@ -333,8 +327,8 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
                 Bitmap bm = BitmapFactory.decodeFile(result);
                 if (bm != null) {
                     final double wRatio = (double) bm.getWidth() / (double) viewHolder.imageView.getMeasuredWidth();
-                    final int w = viewHolder.imageView.getMeasuredWidth()*3/2;
-                    final int h = (int) (bm.getHeight()*3/2 / wRatio);
+                    final int w = viewHolder.imageView.getMeasuredWidth() * 3 / 2;
+                    final int h = (int) (bm.getHeight() * 3 / 2 / wRatio);
                     if (w > 0 && h > 0) {
                         bm = Bitmap.createScaledBitmap(bm, w, h, false);
                     }
@@ -349,6 +343,7 @@ public class UsingAsynTaskMangaPageFragment extends Fragment {
             }
 
         }
+
     }
 
 

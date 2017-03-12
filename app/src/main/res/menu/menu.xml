@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/eraseAll"
-        android:title="Erase All" />
+        android:id="@+id/clearDiskLruCache"
+        android:title="clear Disk LruCache" />
+    <item
+        android:id="@+id/clearDiskCache"
+        android:title="clear Disk Cache" />
+    <item
+        android:id="@+id/useRx"
+        android:title="Rxjava" />
+    <item
+        android:id="@+id/useAsyn"
+        android:title="Asyn" />
+    <!--<item-->
+        <!--android:id="@+id/useIntentService"-->
+        <!--android:title="Intentservice" />-->
 </menu>
