@@ -22,7 +22,7 @@ import ngohoanglong.com.awesomemangareader.model.Image;
 public class AppState {
 
 
-    public static List<Chapter> chapeters = new ArrayList<>();;
+    public static List<Chapter> chapters = new ArrayList<>();;
 
     public static List<Chapter> getFile(Context context) {
 

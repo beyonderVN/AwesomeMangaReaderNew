@@ -136,7 +136,7 @@ public class UsingRxjavaChapterFragment extends Fragment {
         List<Image> images;
 
         public MangaAdapter(int chapterPosition) {
-            this.images = AppState.chapeters.get(chapterPosition).getImageList();
+            this.images = AppState.chapters.get(chapterPosition).getImageList();
         }
 
         @Override

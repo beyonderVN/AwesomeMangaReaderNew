@@ -73,7 +73,7 @@ public class UsingAsynTaskChapterFragment extends Fragment {
 
         if (getArguments() != null) {
             final int pst = getArguments().getInt(ARG_PARAM1);
-            chapter = AppState.chapeters.get(pst);
+            chapter = AppState.chapters.get(pst);
             Log.d(TAG, "onCreateView: " + chapter.getImageList().size());
         }
 

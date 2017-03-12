@@ -145,7 +145,7 @@ public class ChapterFragment extends Fragment {
     class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ViewHolder> {
 
         public ChapterAdapter(int chapterPosition) {
-            images = AppState.chapeters.get(chapterPosition).getImageList();
+            images = AppState.chapters.get(chapterPosition).getImageList();
         }
         List<Image> images;
         @Override
@@ -161,7 +161,7 @@ public class ChapterFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     ActivityOptionsCompat options = ActivityOptionsCompat.
-                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View) holder.imageView, AppState.chapeters.get(position).getTitle());
+                            makeSceneTransitionAnimation((Activity) holder.itemView.getContext(), (View) holder.imageView, AppState.chapters.get(position).getTitle());
                     startActivity(DetailActivity.getActivityIntent(holder.imageView.getContext(), images.get(position).getUrl()), options.toBundle());
                 }
             });

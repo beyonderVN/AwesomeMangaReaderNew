@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ngohoanglong.com.awesomemangareader.AppState;
@@ -41,7 +42,7 @@ public class BrowserActivity extends AppCompatActivity {
         setContentView(R.layout.activity_browser);
 
         rvChapterList = (RecyclerView) findViewById(R.id.rvPageList);
-        rvChapterList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL,false));
+        rvChapterList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         new MyAsynTask().execute();
 
     }
@@ -57,23 +58,58 @@ public class BrowserActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(List<Chapter> chapters) {
             super.onPostExecute(chapters);
-            AppState.chapeters.addAll(chapters)  ;
+            AppState.chapters.addAll(chapters);
             currentPagePosittion = 0;
             rvChapterList.setAdapter(new PageListAdapter());
+
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
-                ft.add(R.id.rvPageContent, getFragment(), TAG);
-                ft.commit();
+            for (Chapter chapter : AppState.chapters
+                    ) {
+                String tag = chapter.getTitle();
+                if (getSupportFragmentManager().findFragmentByTag(tag) == null) {
+                    ft.add(R.id.rvPageContent, getFragment(), tag);
+
+                } else {
+                    Fragment f = getSupportFragmentManager().findFragmentByTag(tag);
+                    ft.attach(f);
+                }
+
             }
+
+            ft.commit();
         }
     }
 
+    List<Class> classes;
+
+    {
+        classes = new ArrayList<>();
+        classes.add(UsingRxjavaChapterFragment.class);
+        classes.add(UsingAsynTaskChapterFragment.class);
+        classes.add(UsingServiceChapterFragment.class);
+    }
+
+    private int checkFragment(Fragment f) {
+        if (f instanceof UsingRxjavaChapterFragment) {
+            return 0;
+        }
+        if (f instanceof UsingAsynTaskChapterFragment) {
+            return 1;
+        }
+        if (f instanceof UsingServiceChapterFragment) {
+            return 1;
+        }
+        return currentPagePosittion;
+    }
 
     private Fragment getFragment() {
-        switch (useType){
-            case 0:return UsingRxjavaChapterFragment.newInstance(currentPagePosittion);
-            case 1:return UsingAsynTaskChapterFragment.newInstance(currentPagePosittion);
-            case 2:return UsingServiceChapterFragment.newInstance(AppState.chapeters.get(currentPagePosittion));
+        switch (useType) {
+            case 0:
+                return UsingRxjavaChapterFragment.newInstance(currentPagePosittion);
+            case 1:
+                return UsingAsynTaskChapterFragment.newInstance(currentPagePosittion);
+            case 2:
+                return UsingServiceChapterFragment.newInstance(AppState.chapters.get(currentPagePosittion));
         }
         return null;
     }
@@ -95,13 +131,13 @@ public class BrowserActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(ViewHolder holder, final int position) {
-            if(holder!=null){
-                holder.tvPageName.setText(AppState.chapeters.get(position).getTitle());
-                if(position==currentPagePosittion){
+            if (holder != null) {
+                holder.tvPageName.setText(AppState.chapters.get(position).getTitle());
+                if (position == currentPagePosittion) {
                     holder.cvWrap.setCardElevation(10);
                     holder.cvWrap.setCardBackgroundColor(holder.itemView.getResources().getColor(R.color.aqua));
                     holder.tvPageName.setTextColor(holder.itemView.getContext().getResources().getColor(R.color.white));
-                }else {
+                } else {
                     holder.cvWrap.setCardElevation(0);
                     holder.cvWrap.setCardBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.white));
                     holder.tvPageName.setTextColor(holder.itemView.getResources().getColor(R.color.aqua));
@@ -110,17 +146,37 @@ public class BrowserActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         currentPagePosittion = position;
+//                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+//
+//                        if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
+//                            ft.add(R.id.rvPageContent, getFragment(), TAG);
+//                            ft.addToBackStack(null);
+//                            ft.commit();
+//                        } else {
+//                            ft.replace(R.id.rvPageContent, getFragment(), TAG);
+//                            ft.addToBackStack(null);
+//                            ft.commit();
+//                        }
+
                         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                        if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
-                            ft.add(R.id.rvPageContent, getFragment(), TAG);
-                            ft.addToBackStack(null);
-                            ft.commit();
+
+                        String tag = AppState.chapters.get(position).getTitle();
+                        Fragment f = getSupportFragmentManager().findFragmentByTag(tag);
+                        if (f == null ) {
+                            ft.add(R.id.rvPageContent, getFragment(), tag);
+                        } else {
+                            if(currentPagePosittion!=checkFragment(f)){
+                                ft.remove(f);
+                                Fragment newF = getFragment();
+                                ft.replace(R.id.rvPageContent,newF , tag);
+                            }else {
+                                ft.replace(R.id.rvPageContent,f , tag);
+                            }
+
                         }
-                        else  {
-                            ft.replace(R.id.rvPageContent, getFragment(), TAG);
-                            ft.addToBackStack(null);
-                            ft.commit();
-                        }
+                        ft.commit();
+
+
                         notifyDataSetChanged();
                     }
                 });
@@ -129,11 +185,13 @@ public class BrowserActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return AppState.chapeters.size();
+            return AppState.chapters.size();
         }
+
         public class ViewHolder extends RecyclerView.ViewHolder {
             TextView tvPageName;
             CardView cvWrap;
+
             public ViewHolder(View view) {
                 super(view);
                 tvPageName = (TextView) view.findViewById(R.id.tvPageName);
@@ -144,6 +202,8 @@ public class BrowserActivity extends AppCompatActivity {
 
 
     }
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -152,23 +212,24 @@ public class BrowserActivity extends AppCompatActivity {
     }
 
 
-    int useType=0;
+    int useType = 0;
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        switch (item.getItemId()){
-            case  R.id.clearDiskCache:
+        switch (item.getItemId()) {
+            case R.id.clearDiskCache:
                 MangaReaderApp.deleteAllLocalImages();
                 return false;
-            case  R.id.clearDiskLruCache:
+            case R.id.clearDiskLruCache:
                 ImageUtils.clearCache();
 
                 return false;
-            case  R.id.useRx:
-                useType=0;
+            case R.id.useRx:
+                useType = 0;
                 return false;
-            case  R.id.useAsyn:
-                useType=1;
+            case R.id.useAsyn:
+                useType = 1;
                 return false;
 //            case  R.id.useIntentService:
 //                useType=2;
