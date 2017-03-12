@@ -8,11 +8,8 @@ import android.util.Log;
 import com.squareup.leakcanary.LeakCanary;
 
 import java.io.File;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import ngohoanglong.com.awesomemangareader.utils.ImageUtils;
-import okhttp3.OkHttpClient;
 
 /**
  * Created by Admin on 09/03/2017.
@@ -23,20 +20,15 @@ public class MangaReaderApp extends Application {
 
     public static Context context   ;
     public static int width = 0;
-    public static OkHttpClient client;
-
-    public static Executor loadImageExecutor;
     public static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
 
     @Override
     public void onCreate() {
         super.onCreate();
         context = getApplicationContext();
-
         LeakCanary.install(this);
-
         new ImageUtils(this);
-        loadImageExecutor = Executors.newFixedThreadPool(NUMBER_OF_CORES*4);
+
     }
 
 

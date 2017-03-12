@@ -200,7 +200,9 @@ public class UsingAsynTaskChapterFragment extends Fragment {
             }
 
             void loadImage(String url) {
-
+                percent.setText("loading !!!");
+                viewAnimator.setDisplayedChild(0);
+                imageView.setImageDrawable(null);
                 this.url = url;
                 Bitmap bm = lruCache.get(url);
                 if (bm != null) {
@@ -272,8 +274,7 @@ public class UsingAsynTaskChapterFragment extends Fragment {
                     final MangaAdapter.ViewHolder viewHolder = reference.get();
 
                     if (viewHolder != null) {
-                        if(viewHolder.url!=url)return null;
-                        if (isCancelled()) {
+                        if (isCancelled()||viewHolder.url!=url||viewHolder.loadImageTask!=this) {
                             publishProgress(-1);
                             os.close();
                             input.close();
