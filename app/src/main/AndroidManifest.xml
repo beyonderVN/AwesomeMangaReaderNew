@@ -14,19 +14,28 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Design.NoActionBar">
-        <activity android:name=".MainActivity">
+        <activity android:name=".activity.MainActivity">
+        </activity>
+
+        <service android:name=".service.DownloadIntentService" />
+        <service android:name=".service.ThreadPoolDownloadService" />
+
+        <activity android:name=".activity.DetailActivity"
+            android:theme="@style/NoActionBar"></activity>
+        <activity android:name=".activity.BrowserActivity"
+            android:theme="@style/NoActionBar"></activity>
+
+
+        <!--laucher must be below all activities-->
+        <activity-alias
+            android:name=".laucher"
+            android:targetActivity=".activity.BrowserActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <service android:name=".DownloadIntentService" />
-        <service android:name=".ThreadPoolDownloadService" />
-
-        <activity android:name=".DetailActivity"
-            android:theme="@style/NoActionBar"></activity>
+        </activity-alias>
     </application>
 
 </manifest>

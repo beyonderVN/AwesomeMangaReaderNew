@@ -1,4 +1,4 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.activity;
 
 import android.app.Activity;
 import android.content.Context;
@@ -22,6 +22,10 @@ import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLConnection;
 
+import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
+import ngohoanglong.com.awesomemangareader.customview.MyImageView;
+import ngohoanglong.com.awesomemangareader.R;
+
 import static ngohoanglong.com.awesomemangareader.MangaReaderApp.context;
 
 public class DetailActivity extends AppCompatActivity {
@@ -39,7 +43,7 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
         urlImage = getIntent().getExtras().getString(URL_IMAGE);
         imageView = (MyImageView) findViewById(R.id.ivImage);
-        percent = (TextView) findViewById(R.id.tvPercent);
+        percent = (TextView) findViewById(R.id.tvStatus);
         viewAnimator = (ViewAnimator) findViewById(R.id.avPageStage);
         imageView.setTransitionName(urlImage);
 
@@ -145,8 +149,8 @@ public class DetailActivity extends AppCompatActivity {
 
             if (bitmap != null) {
                 final double wRatio = (double) bitmap.getWidth() / (double) detailActivity.imageView.getMeasuredWidth();
-                final int w = detailActivity.imageView.getMeasuredWidth()*3/2;
-                final int h = (int) (bitmap.getHeight() / wRatio);
+                final int w = detailActivity.imageView.getMeasuredWidth()*3;
+                final int h = (int) (bitmap.getHeight() *3/ wRatio);
                 if (w > 0 && h > 0) {
                     bitmap = Bitmap.createScaledBitmap(bitmap, w, h, false);
                 }

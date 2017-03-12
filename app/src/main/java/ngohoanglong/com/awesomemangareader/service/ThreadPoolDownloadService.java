@@ -1,4 +1,4 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.service;
 
 import android.app.Service;
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.os.Messenger;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
 
 /**
  * @class ThreadPoolDownloadService

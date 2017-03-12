@@ -1,4 +1,4 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.customview;
 
 import android.content.Context;
 import android.graphics.Canvas;

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:isScrollContainer="true"
-    tools:context="ngohoanglong.com.awesomemangareader.DetailActivity">
+    tools:context="ngohoanglong.com.awesomemangareader.activity.DetailActivity">
 
     <ViewAnimator
         android:id="@+id/avPageStage"
@@ -19,7 +19,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="0dp">
         <TextView
-            android:id="@+id/tvPercent"
+            android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -27,7 +27,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Display3"
             android:textColor="#000"
             android:textSize="18sp" />
-        <ngohoanglong.com.awesomemangareader.MyImageView
+        <ngohoanglong.com.awesomemangareader.customview.MyImageView
             android:id="@+id/ivImage"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"

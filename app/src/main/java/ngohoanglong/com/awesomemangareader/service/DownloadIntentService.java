@@ -1,10 +1,12 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.service;
 
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Messenger;
+
+import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
 
 /**
  * @class DownloadIntentService

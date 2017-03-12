@@ -1,4 +1,4 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.activity;
 
 import android.Manifest;
 import android.content.Context;
@@ -16,6 +16,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,7 +31,22 @@ import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class MainActivity extends AppCompatActivity {
+import ngohoanglong.com.awesomemangareader.Page;
+import ngohoanglong.com.awesomemangareader.MangaReaderApp;
+import ngohoanglong.com.awesomemangareader.R;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingAsynTaskMangaPageFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingServiceMangaPageFragment;
+import ngohoanglong.com.awesomemangareader.activity.fragment.UsingRxjavaMangaPageFragment;
+
+public class
+
+
+
+
+
+
+
+MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private Toolbar toolbar;
     private TabLayout tabLayout;
@@ -74,14 +92,14 @@ public class MainActivity extends AppCompatActivity {
             //resume tasks needing this permission
         }
     }
-    List<MangaPage> mangaPages = new ArrayList<>();
+    List<Page> pages = new ArrayList<>();
     ViewPagerAdapter adapter;
     private void setupViewPager(ViewPager viewPager) {
 
 
         try {
-            mangaPages = new MyAsynTask().execute().get();
-            Log.d(TAG, "setupViewPager: "+mangaPages.size());
+            pages = new MyAsynTask().execute().get();
+            Log.d(TAG, "setupViewPager: "+ pages.size());
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -115,24 +133,25 @@ public class MainActivity extends AppCompatActivity {
             mFragmentTitleList.add(title);
         }
 
-        public void addFragment(MangaPage mangaPage) {
+        public void addFragment(Page page) {
             List<Class> classes = new ArrayList<>();
             classes.add(UsingAsynTaskMangaPageFragment.class);
             classes.add(UsingServiceMangaPageFragment.class);
+            classes.add(UsingRxjavaMangaPageFragment.class);
 
             switch (mFragmentList.size()%classes.size()) {
                 case 0:
-                mFragmentList.add(UsingAsynTaskMangaPageFragment.newInstance(mangaPage));
+                mFragmentList.add(UsingRxjavaMangaPageFragment.newInstance(page));
                     break;
-                case 1:
-                    mFragmentList.add(UsingAsynTaskMangaPageFragment.newInstance(mangaPage));
-                    break;
-                default:
-                    mFragmentList.add(UsingAsynTaskMangaPageFragment.newInstance(mangaPage));
-                    break;
+//                case 1:
+//                    mFragmentList.add(UsingRxjavaMangaPageFragment.newInstance(page));
+//                    break;
+//                default:
+//                    mFragmentList.add(UsingRxjavaMangaPageFragment.newInstance(page));
+//                    break;
             }
 
-            mFragmentTitleList.add(mangaPage.getTitle());
+            mFragmentTitleList.add(page.getTitle());
         }
 
         @Override
@@ -153,34 +172,10 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    private List<MangaPage> getFile() {
+    private List<Page> getFile() {
 
-        List<MangaPage> pages = new ArrayList<>();
+        List<Page> pages = new ArrayList<>();
         try {
-//            Request request = new Request.Builder()
-//                    .url(url)
-//                    .build();
-//            Response response = MangaReaderApp.client.newCall(request).execute();
-//            URL url = new URL(urlFile);
-//            URLConnection urlConnection = url.openConnection();
-//            urlConnection.connect();
-//            int file_size = urlConnection.getContentLength();
-//            InputStream in = urlConnection.getInputStream();
-//            long fileLength = urlConnection.getContentLength();
-//            Log.d(TAG, "fileLength: "+fileLength);
-//            byte data[] = new byte[4096];
-//            long total = 0;
-//            int count;
-//            while ((count = in.read(data)) != -1) {
-////                // allow canceling with back button
-////                if (isCancelled()) {
-////                    input.close();
-////                    return null;
-////                }
-//                total += count;
-//                Log.d(TAG, "total: "+total);
-//                Log.d(TAG, "percent: "+((int) (total * 100 / fileLength)));
-//            }
 
             InputStream in = getInputStreamFromAssets(getApplicationContext(), "JSONfiles.zip");
             ZipInputStream zipInputStream = new ZipInputStream(in);
@@ -208,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     }
-                    pages.add(new MangaPage(ze.getName(), strings));
+//                    pages.add(new Page(ze.getName(), strings));
                     // do reading, usually loop until end of file reading
 
                 }
@@ -223,29 +218,39 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    class MyAsynTask extends AsyncTask<String, String, List<MangaPage>> {
+    class MyAsynTask extends AsyncTask<String, String, List<Page>> {
 
         @Override
-        protected List<MangaPage> doInBackground(String... params) {
+        protected List<Page> doInBackground(String... params) {
 
             return getFile();
         }
 
         @Override
-        protected void onPostExecute(List<MangaPage> mangaPages) {
-            super.onPostExecute(mangaPages);
-            for (MangaPage mangaPage:mangaPages
-                 ) {
-
+        protected void onPostExecute(List<Page> pages) {
+            super.onPostExecute(pages);
+            for (Page page : pages
+                    ) {
                 ArrayList<String> strings = new ArrayList<>();
-                final int n = mangaPage.getImageList().size();
-                for(int i=0;i<mangaPage.getImageList().size()&&i<n;i++){
-                    strings.add(mangaPage.getImageList().get(i));
+                final int n = page.getImageList().size();
+                for (int i = 0; i < page.getImageList().size() && i < n; i++) {
+//                    strings.add(page.getImageList().get(i));
                 }
-                adapter.addFragment(new MangaPage(mangaPage.getTitle(),strings));
-            }
-            adapter.notifyDataSetChanged();
-        }
+//                adapter.addFragment(new Page(page.getTitle(), strings));
 
+
+            }
+        }
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
     }
 }

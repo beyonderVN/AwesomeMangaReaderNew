@@ -1,4 +1,4 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.activity.fragment;
 
 
 import android.app.Activity;
@@ -32,6 +32,12 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import ngohoanglong.com.awesomemangareader.Page;
+import ngohoanglong.com.awesomemangareader.utils.DownloadUtils;
+import ngohoanglong.com.awesomemangareader.R;
+import ngohoanglong.com.awesomemangareader.service.ThreadPoolDownloadService;
+import ngohoanglong.com.awesomemangareader.activity.DetailActivity;
+
 import static android.content.ContentValues.TAG;
 import static ngohoanglong.com.awesomemangareader.MangaReaderApp.context;
 
@@ -48,7 +54,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
 
 
     // TODO: Rename and change types of parameters
-    private MangaPage mangaPage;
+    private Page page;
 
 
     public UsingServiceMangaPageFragment() {
@@ -59,14 +65,14 @@ public class UsingServiceMangaPageFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param mangaPage Parameter 1.
+     * @param page Parameter 1.
      * @return A new instance of fragment UsingServiceMangaPageFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static UsingServiceMangaPageFragment newInstance(MangaPage mangaPage) {
+    public static UsingServiceMangaPageFragment newInstance(Page page) {
         UsingServiceMangaPageFragment fragment = new UsingServiceMangaPageFragment();
         Bundle args = new Bundle();
-        args.putSerializable(ARG_PARAM1, mangaPage);
+        args.putSerializable(ARG_PARAM1, page);
         fragment.setArguments(args);
         return fragment;
     }
@@ -91,7 +97,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putSerializable(ARG_PARAM1, mangaPage);
+        outState.putSerializable(ARG_PARAM1, page);
     }
 
     RecyclerView recyclerView;
@@ -101,13 +107,13 @@ public class UsingServiceMangaPageFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         if (getArguments() != null) {
-            mangaPage = (MangaPage) getArguments().getSerializable(ARG_PARAM1);
-            Log.d(TAG, "onCreateView: " + mangaPage.getImageList().size());
+            page = (Page) getArguments().getSerializable(ARG_PARAM1);
+            Log.d(TAG, "onCreateView: " + page.getImageList().size());
         }
         View view = inflater.inflate(R.layout.fragment_manga_page, container, false);
         recyclerView = (RecyclerView) view.findViewById(R.id.rvImages);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        recyclerView.setAdapter(new MangaAdapter(mangaPage.getImageList()));
+//        recyclerView.setAdapter(new MangaAdapter(page.getImageList()));
         return view;
     }
 
@@ -178,7 +184,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
             public ViewHolder(View itemView) {
                 super(itemView);
                 imageView = (ImageView) itemView.findViewById(R.id.ivImage);
-                percent = (TextView) itemView.findViewById(R.id.tvPercent);
+                percent = (TextView) itemView.findViewById(R.id.tvStatus);
                 viewAnimator = (ViewAnimator) itemView.findViewById(R.id.avPageStage);
 
             }
@@ -191,7 +197,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
                 if (imageView == null) return;
                 Bitmap bm = lruCache.get(url);
                 if (bm != null) {
-                    Log.d(TAG, "loadImage: " + url);
+                    Log.d(TAG, "onBindVieHolder: " + url);
 
                     imageView.setImageBitmap(bm);
                     viewAnimator.setDisplayedChild(1);
@@ -210,7 +216,7 @@ public class UsingServiceMangaPageFragment extends Fragment {
                     }
 
                 } catch (Exception e) {
-                    Log.d(TAG, "loadImage: " + e.getMessage());
+                    Log.d(TAG, "onBindVieHolder: " + e.getMessage());
                 }
                 Intent threadsIntent = ThreadPoolDownloadService.makeIntent(itemView.getContext(), handler,
                         url);

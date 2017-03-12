@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cvWrap"
+    android:layout_width="wrap_content"
+    android:layout_height="40dp"
+    app:cardBackgroundColor="@color/aqua"
+    app:cardCornerRadius="12dp"
+    app:cardUseCompatPadding="true"
+    app:cardElevation="0dp"
+    >
+
+    <TextView
+        android:id="@+id/tvPageName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:text="12323423423423423"
+        android:textColor="@color/white"
+        android:textAlignment="center"
+        android:textSize="12sp"
+        />
+</android.support.v7.widget.CardView>
+

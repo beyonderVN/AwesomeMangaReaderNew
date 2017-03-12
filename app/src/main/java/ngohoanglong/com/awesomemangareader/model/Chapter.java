@@ -1,4 +1,4 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.model;
 
 import java.io.Serializable;
 import java.util.List;
@@ -7,14 +7,14 @@ import java.util.List;
  * Created by Admin on 10/03/2017.
  */
 
-public class MangaPage implements Serializable {
+public class Chapter implements Serializable {
     private String title;
-    private List<String> imageList;
+    private List<Image> imageList;
 
-    public MangaPage() {
+    public Chapter() {
     }
 
-    public MangaPage(String title, List<String> imageList) {
+    public Chapter(String title, List<Image> imageList) {
         this.title = title;
         this.imageList = imageList;
     }
@@ -27,17 +27,17 @@ public class MangaPage implements Serializable {
         this.title = title;
     }
 
-    public List<String> getImageList() {
+    public List<Image> getImageList() {
         return imageList;
     }
 
-    public void setImageList(List<String> imageList) {
+    public void setImageList(List<Image> imageList) {
         this.imageList = imageList;
     }
 
     @Override
     public String toString() {
-        return "MangaPage{" +
+        return "ChapterAdapter{" +
                 "title='" + title + '\'' +
                 ", imageList.size=" + imageList.size() +
                 '}';

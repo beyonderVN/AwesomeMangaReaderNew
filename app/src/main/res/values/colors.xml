@@ -3,4 +3,36 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="gray">#cacaca</color>
+    <color name="tran_gray">#bbffffff</color>
+    <color name="black_tran">#91000000</color>
+    <color name="white">#ffffff</color>
+
+    <color name="scrim">#86323232</color>
+    <color name="black">#000000</color>
+
+    <color name="itemBackgroundToolBar">#729c9a9a</color>
+    <color name="aqua">#6BBAA7</color>
+    <color name="sunshine">#FBA100</color>
+    <color name="lavender">#6C648B</color>
+    <color name="dustyrose">#B6A19E</color>
+
+    <color name="Chocolate">#D2691E</color>
+    <color name="DarkGoldenrod">#B8860B</color>
+    <color name="BlueViolet">#8A2BE2</color>
+    <color name="Aquamarine">#7FFFD4</color>
+    <color name="DarkCyan">#008b8b</color>
+    <color name="DarkGreen">#006400</color>
+    <color name="Black">#000000</color>
+
+    <color name="toan">@color/aqua</color>
+    <color name="ly">@color/sunshine</color>
+    <color name="hoa">@color/lavender</color>
+    <color name="anh">@color/dustyrose</color>
+
+    <color name="page_indicator_dark">#80333333</color>
+    <color name="page_indicator_tran">#00333333</color>
+    <color name="page_indicator_dark_selected">#ff333333</color>
+    <color name="gray_alpha">#443b3b3b</color>
 </resources>

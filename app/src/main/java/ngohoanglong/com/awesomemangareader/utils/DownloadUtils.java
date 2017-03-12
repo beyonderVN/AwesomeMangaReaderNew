@@ -1,4 +1,4 @@
-package ngohoanglong.com.awesomemangareader;
+package ngohoanglong.com.awesomemangareader.utils;
 
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -19,6 +19,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+
+import ngohoanglong.com.awesomemangareader.MangaReaderApp;
+import ngohoanglong.com.awesomemangareader.R;
 
 /**
  * @class DownloadUtils
